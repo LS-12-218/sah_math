@@ -10,6 +10,9 @@ figure = {
 
 barve = {0: "brez", 1: "beli", 2: "crni"}
 
+def zamenjaj(barva):
+    return 1 + barva % 2
+
 
 class Igra:
     def __init__(self):
@@ -19,11 +22,8 @@ class Igra:
         self.igralec = 1
         self.kralj_1 = (7, 4)
         self.kralj_2 = (0, 4)
-        self.sah = set()
-        self.premiki_1 = (set(), set())
-        self.premiki_2 = (set(), set())
-        self.ne_premakni_1 = {}
-        self.ne_premakni_2 = {}
+        self.sah = []
+        self.ne_premakni = {}
         self.stanje = 1
 
     def barva(self, i, j):
@@ -44,14 +44,6 @@ class Igra:
         else:
             return False
 
-    def veljaven_premik_kralj(self, barva, i, j, upostevaj_vse = False):
-        if self.veljaven_premik(barva, i, j, upostevaj_vse):
-            if barva == 1 and (i, j) not in self.premiki_2[0]:
-                return True
-            elif barva == 2 and (i, j) not in self.premiki_1[0]:
-                return True
-        return False
-
     def premakni(self, iz_i, iz_j, na_i, na_j):
         if self.figura(iz_i, iz_j) == "kralj":
             if self.barva(iz_i, iz_j) == 1:
@@ -63,122 +55,97 @@ class Igra:
         sahovnica[iz_i][iz_j] = (0, "")
         self.sahovnica = sahovnica
 
-    def premik_indeks(self, barva, i, j):
-        if self.barva(i, j) in [0, barva]:
-            return 0
+    def premiki_ponavljaj(self, barva, i, j, k, l):
+        premiki = []
+        i += k
+        j += l
+        while self.veljaven_premik(barva, i, j):
+            premiki.append((i, j))
+            if self.barva(i, j) != 0:
+                break
+            else:
+                i += k
+                j += l
+        return premiki
+
+    def premiki_kmet(self, barva, i, j):
+        premiki = []
+        if barva == 1:
+            if i == 6 and (self.barva(5, j), self.barva(4, j)) == (0, 0):
+                premiki.append((4, j))
+            i -= 1
+        elif barva == 2:
+            if i == 1 and (self.barva(3, j), self.barva(2, j)) == (0, 0):
+                premiki.append((3, j))
+            i += 1
+        if self.veljaven_premik(barva, i, j) and self.barva(i, j) == 0:
+            premiki.append((i, j))
+        premiki += [(i, j + k) for k in (-1, 1) if self.veljaven_premik(barva, i, j + k) and self.barva(i, j + k) != 0]
+        return premiki
+
+    def premiki_konj(self, barva, i, j):
+        premiki = []
+        premiki += [(k, l) for k in (i - 2, i + 2) for l in (j - 1, j + 1) if self.veljaven_premik(barva, k, l)]
+        premiki += [(k, l) for k in (i - 1, i + 1) for l in (j - 2, j + 2) if self.veljaven_premik(barva, k, l)]
+        return premiki
+
+    def premiki_lovec(self, barva, i, j):
+        premiki = []
+        for k in (-1, 1):
+            for l in (-1, 1):
+                premiki += self.premiki_ponavljaj(barva, i, j, k, l)
+        return premiki
+
+    def premiki_trdnjava(self, barva, i, j):
+        premiki = []
+        for k in (-1, 1):
+            premiki += self.premiki_ponavljaj(barva, i, j, k, 0)
+            premiki += self.premiki_ponavljaj(barva, i, j, 0, k)
+        return premiki
+
+    def premiki_kralj(self, barva, i, j):
+        kralj = [(k, l) for k in range(i - 1, i + 2) for l in range(j - 1, j + 2) if self.veljaven_premik(barva, k, l)]
+        self.sahovnica[i][j] = (0, "")
+        kralj = [polje for polje in kralj if not self.preveri_sah(barva, *polje)]
+        self.sahovnica[i][j] = (barva, "kralj")
+        return kralj
+
+    def dovoljen_premik(self, iz_i, iz_j, na_i, na_j, k, l):
+        i, j = na_i - iz_i, na_j - iz_j
+        if k == 0:
+            return i == 0
+        elif l == 0:
+            return j == 0
         else:
-            return 1
+            return abs(i) == abs(j) and i * j * k * l > 0
 
-    def mozni_premiki(self, i, j, preveri = False):
+    def mozni_premiki_figura(self, figura, i, j):
         barva = self.barva(i, j)
-        figura = self.figura(i, j)
-        premiki = set()
-
         if figura == "kmet":
-            if barva == 1:
-                if i == 6 and self.barva(4, j) == 0 and not preveri:
-                    premiki.add((4, j))
-                ii = i - 1
-            elif barva == 2:
-                if i == 1 and self.barva(3, j) == 0 and not preveri:
-                    premiki.add((3, j))
-                ii = i + 1
-            if self.veljaven_premik(barva, ii, j) and self.barva(ii, j) == 0 and not preveri:
-                premiki.add((ii, j))
-            premiki.update({(ii, j + k) for k in [-1, 1] if self.veljaven_premik(barva, ii, j + k, preveri) and (self.barva(ii, j + k) != 0 or preveri)})
-
+            return self.premiki_kmet(barva, i, j)
         elif figura == "konj":
-            for k in [-2, 2]:
-                for l in [-1, 1]:
-                    if self.veljaven_premik(barva, i + k, j + l, preveri):
-                        premiki.add((i + k, j + l))
-                    if self.veljaven_premik(barva, i + l, j + k, preveri):
-                        premiki.add((i + l, j + k))
-
-        elif figura in ["lovec", "kraljica"]:
-            for k in [-1, 1]:
-                for l in [-1, 1]:
-                    ii = i + k
-                    jj = j + l
-                    while self.veljaven_premik(barva, ii, jj, preveri):
-                        premiki.add((ii, jj))
-                        if self.barva(ii, jj) != 0:
-                            if preveri and self.barva(ii, jj) != barva:
-                                self.ne_premakni(barva, ii, jj, k, l)
-                            break
-                        else:
-                            ii += k
-                            jj += l
-
-        if figura in ["trdnjava", "kraljica"]:
-            for k in [-1, 1]:
-                ii = i + k
-                while self.veljaven_premik(barva, ii, j, preveri):
-                    premiki.add((ii, j))
-                    if self.barva(ii, j) != 0:
-                        if preveri and self.barva(ii, j) != barva:
-                            self.ne_premakni(barva, ii, j, k, 0)
-                        break
-                    else:
-                        ii += k
-                jj = j + k
-                while self.veljaven_premik(barva, i, jj, preveri):
-                    premiki.add((i, jj))
-                    if self.barva(i, jj) != 0:
-                        if preveri and self.barva(i, jj) != barva:
-                            self.ne_premakni(barva, i, jj, 0, k)
-                        break
-                    else:
-                        jj += k
-
+            return self.premiki_konj(barva, i, j)
+        elif figura == "lovec":
+            return self.premiki_lovec(barva, i, j)
+        elif figura == "trdnjava":
+            return self.premiki_trdnjava(barva, i, j)
+        elif figura == "kraljica":
+            return (self.premiki_lovec(barva, i, j) + self.premiki_trdnjava(barva, i, j))
         elif figura == "kralj":
-            for k in range(-1, 2):
-                for l in range(-1, 2):
-                    if self.veljaven_premik_kralj(barva, i + k, j + l, preveri) and [k, l] != [0, 0]:
-                        premiki.add((i + k, j + l))
+            return self.premiki_kralj(barva, i, j)
 
-        if barva == 1 and (i, j) in self.ne_premakni_1:
-            k, l = self.ne_premakni_1[(i, j)]
-            prepovedano = {(i + k * a, j + l * a) for a in range(-8, 9)}
+    def mozni_premiki(self, i, j):
+        figura = self.figura(i, j)
+        premiki = self.mozni_premiki_figura(figura, i, j)
+        if (i, j) in self.ne_premakni:
             if figura == "kralj":
-                premiki -= prepovedano
+                premiki = [premik for premik in premiki if not self.dovoljen_premik(i, j, *premik, *self.ne_premakni[(i, j)])]
             else:
-                premiki &= prepovedano
-        elif barva == 2 and (i, j) in self.ne_premakni_2:
-            k, l = self.ne_premakni_2[(i, j)]
-            prepovedano = {(i + k * a, j + l * a) for a in range(-8, 9)}
-            if figura == "kralj":
-                premiki -= prepovedano
-            else:
-                premiki &= prepovedano
-
+                premiki = [premik for premik in premiki if self.dovoljen_premik(i, j, *premik, *self.ne_premakni[(i, j)])]
         if self.stanje == 2 and figura != "kralj":
-            return premiki & self.sah
+            return [premik for premik in premiki if premik in self.sah]
         else:
             return premiki
-
-    def ne_premakni(self, barva, i, j, k, l):
-        if barva == 1:
-            ne_premaknil = self.ne_premakni_2
-            kralj = self.kralj_2
-        else:
-            ne_premaknil = self.ne_premakni_1
-            kralj = self.kralj_1
-        if (i, j) == kralj:
-            ne_premaknil[(i, j)] = (k, l)
-        ii = i + k
-        jj = j + l
-        while self.veljaven_premik(barva, ii, jj):
-            if (ii, jj) == kralj:
-                ne_premaknil[(i, j)] = (k, l)
-            if self.barva(ii, jj) != 0:
-                break
-            ii += k
-            jj += l
-        if barva == 1:
-            self.ne_premakni_2 = ne_premaknil
-        else:
-            self.ne_premakni_1 = ne_premaknil
 
     def vse_figure(self):
         figure = []
@@ -189,63 +156,80 @@ class Igra:
                     figure.append((i, j))
         return figure
 
-    def vsi_premiki(self):
-        kralja = (self.kralj_1, self.kralj_2)
-        ostalo = set()
-        for polje in self.vse_figure():
-            if polje in kralja:
-                kralj = self.mozni_premiki(*polje, True)
-            else:
-                ostalo.update(self.mozni_premiki(*polje, True))
-        return (kralj | ostalo, ostalo)
+    def ne_premakni_polja(self, i, j):
+        polja = {}
+        barva = zamenjaj(self.igralec)
+        for k in range(-1, 2):
+            for l in range(-1, 2):
+                if (k, l) != (0, 0):
+                    premik = self.premiki_ponavljaj(zamenjaj(barva), i, j, k, l)
+                    if premik:
+                        premik = premik[-1]
+                        if self.barva(*premik) == barva and self.premiki_ponavljaj(barva, *premik, k, l) != []:
+                            konec = self.premiki_ponavljaj(barva, *premik, k, l)
+                            if konec:
+                                konec = konec[-1]
+                                if k * l == 0 and self.figura(*konec) in ("trdnjava", "kraljica"):
+                                    polja[premik] = (k, l)
+                                elif k * l != 0 and self.figura(*konec) in ("lovec", "kraljica"):
+                                    polja[premik] = (k, l)
+        return polja
 
-    def sah_polja(self, i, j):
-        barva = self.barva(i, j)
-        if barva == 1:
-            k, l = self.kralj_2[0] - i, self.kralj_2[1] - j
-        elif barva == 2:
-            k, l = self.kralj_1[0] - i, self.kralj_1[1] - j
+    def sah_polja(self, iz_i, iz_j, na_i, na_j):
+        k, l = na_i - iz_i, na_j - iz_j
         g = max(abs(k), abs(l))
         k //= g
         l //= g
-        return {(i + k * a, j + l * a) for a in range(g)}
+        return [(iz_i + k * a, iz_j + l * a) for a in range(g)]
 
+    def je_figura(self, figure, polja):
+        return [polje for polje in polja if self.figura(*polje) in figure]
 
-    def preveri_sah(self, i, j):
-        figura = self.figura(i, j)
-        if figura in ["lovec", "trdnjava", "kraljica"]:
-            sah = self.sah_polja(i, j)
+    def preveri_sah(self, barva, i, j, kralj = True):
+        if barva == 1:
+            kmet = [(i - 1, k) for k in (j - 1, j + 1) if self.veljaven_premik(barva, i - 1, k)]
+        elif barva == 2:
+            kmet = [(i + 1, k) for k in (j - 1, j + 1) if self.veljaven_premik(barva, i + 1, k)]
+        sah = self.je_figura(["kmet"], kmet) + self.je_figura(["konj"], self.premiki_konj(barva, i, j)) + self.je_figura(["lovec", "kraljica"], self.premiki_lovec(barva, i, j)) + self.je_figura(["trdnjava", "kraljica"], self.premiki_trdnjava(barva, i, j))
+        if kralj:
+            kralj = [(k, l) for k in range(i - 1, i + 2) for l in range(j - 1, j + 2) if self.veljaven_premik(barva, k, l)]
+            sah += self.je_figura(["kralj"], kralj)
+        if sah == []:
+            return None
         else:
-            sah = {(i, j)}
-        if self.igralec == 1 and sah & self.premiki_2[1] == set() and self.mozni_premiki(*self.kralj_2) == set():
-            self.konec_igre()
-        elif self.igralec == 2 and sah & self.premiki_1[1] == set() and self.mozni_premiki(*self.kralj_1) == set():
+            return sah[0]
+
+    def kralj_nasprotni(self):
+        if self.igralec == 1:
+            return self.kralj_2
+        elif self.igralec == 2:
+            return self.kralj_1
+
+    def je_sah(self, i, j):
+        self.stanje = 2
+        kralj = self.kralj_nasprotni()
+        if self.figura(i, j) in ("lovec", "trdnjava", "kraljica"):
+            sah = self.sah_polja(i, j, *kralj)
+        else:
+            sah = [(i, j)]
+        if not any([self.preveri_sah(self.igralec, *polje, False) for polje in sah]) and self.mozni_premiki(*kralj) == []:
             self.konec_igre()
         else:
             self.stanje = 2
             self.sah = sah
-            print(sah)
 
     def igraj(self, iz_i, iz_j, na_i, na_j):
+        kralj = self.kralj_nasprotni()
         igralec = self.igralec
-        if igralec == 1:
-            self.ne_premakni_2 = {}
-        else:
-            self.ne_premakni_1 = {}
         self.premakni(iz_i, iz_j, na_i, na_j)
-        premiki = self.mozni_premiki(na_i, na_j)
-        vsi_premiki = self.vsi_premiki()
-        if igralec == 1:
-            self.premiki_1 = vsi_premiki
-        elif igralec == 2:
-            self.premiki_2 = vsi_premiki
-        if self.kralj_1 in premiki or self.kralj_2 in premiki:
-            self.preveri_sah(na_i, na_j)
+        self.ne_premakni = self.ne_premakni_polja(*kralj)
+        sah = self.preveri_sah(zamenjaj(igralec), *kralj)
+        if sah:
+            self.je_sah(*sah)
         else:
             self.stanje = 1
-            self.sah = set()
-        igralec = 1 + igralec % 2
-        self.igralec = igralec
+            self.sah = []
+        self.igralec = zamenjaj(igralec)
 
     def konec_igre(self):
         self.stanje = 3
@@ -257,7 +241,7 @@ class Igra:
 
 
 treto = Igra()
-treto.igraj(7, 5, 3, 1)
+treto.igraj(0, 0, 0, 0)
 treto.mozni_premiki(1, 3)
 treto.igraj(0, 0, 0, 0)
 treto.igraj(0, 0, 0, 0)
