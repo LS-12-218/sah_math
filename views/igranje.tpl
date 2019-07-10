@@ -1,22 +1,22 @@
 <head>
     <meta content="charset=utf8" />
     <style>
-        p {font-size: 50px; margin: 0px;}
+        p {font-size: 8vmin; margin: 0px;}
         p.brez {color: 000000;}
         p.beli {color: E0E0E0;}
         p.crni {color: 202020;}
-        table {border-collapse: collapse; table-layout: fixed;}
-        th, td {height: 70px; width: 70px; text-align: center; padding: 0px;}
+        table {border-collapse: collapse; table-layout: fixed; position: relative; top: 6vmin;}
+        th, td {height: 11vmin; width: 11vmin; text-align: center; padding: 0px;}
         td.polje_svetlo {background-color: C09048;}
         td.polje_temno {background-color: 806030;}
-        button {height: 70px; width: 70px; text-align: center; border: none; padding: 0px;}
+        button {height: 100%; width: 100%; text-align: center; border: none; padding: 0px;}
         button.polje_svetlo {background-color: C09048;}
         button.polje_temno {background-color: 806030;}
         button.polje_svetlo:hover {background-color: C09000;}
         button.polje_temno:hover {background-color: 906A00;}
     </style>
 </head>
-<table>
+<table align="center">
 %for i in range(8):
     <tr>
     %for j in range(8):

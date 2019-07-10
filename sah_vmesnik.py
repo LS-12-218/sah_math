@@ -20,11 +20,18 @@ def premakni():
     print(premiki)
     sah.igraj(*premiki)
     if sah.stanje == 3:
-        return "Zmaga za {}!".format(sah_model.barve[(sah.igralec + 1) % 2])
+        bottle.redirect("zmaga")
     else:
         bottle.redirect("/")
 
-
+@bottle.get("/zmaga/")
+def zmaga():
+    if sah.igralec == 1:
+        igralec = "Črni"
+    elif sah.igralec == 2:
+        igralec = "Beli"
+    return bottle.template("zmaga", sah = sah, igralec = igralec)
+    
 
 
 bottle.run(debug= True, reloader= True)
