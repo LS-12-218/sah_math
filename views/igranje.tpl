@@ -15,32 +15,35 @@
         button.polje_svetlo:hover {background-color: C09000;}
         button.polje_temno:hover {background-color: 906A00;}
     </style>
-</head>
-<table align="center">
-%for i in range(8):
-    <tr>
-    %for j in range(8):
-    %if (i + j) % 2 == 0:
-    %polje = "svetlo"
-    %elif (i + j) % 2 == 1:
-    %polje = "temno"
-    %end
-    %if (i, j) in veljavni:
-        <form action="/premik/", method="get">
-        <input type="hidden", name="i", value="{{i}}">
-        <input type="hidden", name="j", value="{{j}}">
-            <td>
-                <button type="submit", class="polje_{{polje}}">
+    </head>
+<body>
+    <title>Šah Math</title>
+    <table align="center">
+    %for i in range(8):
+        <tr>
+        %for j in range(8):
+        %if (i + j) % 2 == 0:
+        %polje = "svetlo"
+        %elif (i + j) % 2 == 1:
+        %polje = "temno"
+        %end
+        %if (i, j) in veljavni:
+            <form action="/premik/", method="get">
+            <input type="hidden", name="i", value="{{i}}">
+            <input type="hidden", name="j", value="{{j}}">
+                <td>
+                    <button type="submit", class="polje_{{polje}}">
+                    <p class="{{sah.barva_igra(i, j)}}">{{sah.figura_igra(i, j)}}</p>
+                    </button>
+                </td>
+            </form>
+        %else:
+            <td class="polje_{{polje}}">
                 <p class="{{sah.barva_igra(i, j)}}">{{sah.figura_igra(i, j)}}</p>
-                </button>
             </td>
-        </form>
-    %else:
-        <td class="polje_{{polje}}">
-            <p class="{{sah.barva_igra(i, j)}}">{{sah.figura_igra(i, j)}}</p>
-        </td>
+        %end
+        %end
+        </tr>
     %end
-    %end
-    </tr>
-%end
-</table>
+    </table>
+</body>

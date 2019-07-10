@@ -20,38 +20,41 @@
         button.figura_temno:hover {background-color: A0A000;}
     </style>
 </head>
-<table align="center">
-%for k in range(8):
-    <tr>
-    %for l in range(8):
-    %if (k + l) % 2 == 0:
-    %polje = "svetlo"
-    %elif (k + l) % 2 == 1:
-    %polje = "temno"
-    %end
-    %if (k, l) == (i, j):
-        <form action="/", method="get">
-            <td>
-                <button type="submit", class="figura_{{polje}}">
+<body>
+    <title>Šah Math</title>
+    <table align="center">
+    %for k in range(8):
+        <tr>
+        %for l in range(8):
+        %if (k + l) % 2 == 0:
+        %polje = "svetlo"
+        %elif (k + l) % 2 == 1:
+        %polje = "temno"
+        %end
+        %if (k, l) == (i, j):
+            <form action="/", method="get">
+                <td>
+                    <button type="submit", class="figura_{{polje}}">
+                    <p class="{{sah.barva_igra(k, l)}}">{{sah.figura_igra(k, l)}}</p>
+                    </button>
+                </td>
+            </form>
+        %elif (k, l) in veljavni:
+            <form action="/premakni/", method="post">
+            <input type="hidden", name="premiki", value="{{i}}{{j}}{{k}}{{l}}">
+                <td>
+                    <button type="submit", class="polje_{{polje}}">
+                    <p class="{{sah.barva_igra(k, l)}}">{{sah.figura_igra(k, l)}}</p>
+                    </button>
+                </td>
+            </form>
+        %else:
+            <td class="polje_{{polje}}">
                 <p class="{{sah.barva_igra(k, l)}}">{{sah.figura_igra(k, l)}}</p>
-                </button>
             </td>
-        </form>
-    %elif (k, l) in veljavni:
-        <form action="/premakni/", method="post">
-        <input type="hidden", name="premiki", value="{{i}}{{j}}{{k}}{{l}}">
-            <td>
-                <button type="submit", class="polje_{{polje}}">
-                <p class="{{sah.barva_igra(k, l)}}">{{sah.figura_igra(k, l)}}</p>
-                </button>
-            </td>
-        </form>
-    %else:
-        <td class="polje_{{polje}}">
-            <p class="{{sah.barva_igra(k, l)}}">{{sah.figura_igra(k, l)}}</p>
-        </td>
+        %end
+        %end
+        </tr>
     %end
-    %end
-    </tr>
-%end
-</table>
+    </table>
+</body>
