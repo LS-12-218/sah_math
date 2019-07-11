@@ -28,7 +28,7 @@
         %polje = "temno"
         %end
         %if (i, j) in veljavni:
-            <form action="/premik/", method="get">
+            <form action="/igra/premik/", method="get">
             <input type="hidden", name="i", value="{{i}}">
             <input type="hidden", name="j", value="{{j}}">
                 <td>

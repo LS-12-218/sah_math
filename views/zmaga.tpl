@@ -37,9 +37,7 @@
             <td class="zmaga">
                 Šah Mat<br>
                 <p><b>{{igralec}} je zmagal!</b></p><br>
-                <form action="/", method="GET">
-                    <button class="btn btn-primary", type="submit">V redu</button>
-                </form>
+                <a href="/", type="button", class="btn btn-primary", type="submit">V redu</a>
             </td>
         </tr>
     </table>

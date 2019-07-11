@@ -15,6 +15,7 @@ def zamenjaj(barva):
 
 
 class Igra:
+
     def __init__(self):
         sahovnica = [[(2, "trdnjava"), (2, "konj"), (2, "lovec"), (2, "kraljica"), (2, "kralj"), (2, "lovec"), (2, "konj"), (2, "trdnjava")]] + [8 * [(2, "kmet")]] + 4 * [8 * [(0, "")]] + [8 * [(1, "kmet")]] + [[(1, "trdnjava"), (1, "konj"), (1, "lovec"), (1, "kraljica"), (1, "kralj"), (1, "lovec"), (1, "konj"), (1, "trdnjava")]]
         sahovnica = [list(vrsta) for vrsta in sahovnica]
@@ -235,15 +236,31 @@ class Igra:
         self.stanje = 3
         print("Zmaga za", self.igralec)
 
+class Sah:
 
+    def __init__(self):
+        self.igre = {}
+        self.id_igre = 0
 
+    def dodaj_igro(self):
+        self.igre[self.id_igre] = Igra()
+        self.id_igre += 1
 
+    def odstrani_igro(self, id_igre):
+        del self.igre[id_igre]
 
+    def igra(self, id_igre):
+        igre = self.igre
+        if id_igre in igre:
+            return igre[id_igre]
+        else:
+            return None
 
-treto = Igra()
-treto.igraj(0, 0, 0, 0)
-treto.mozni_premiki(1, 3)
-treto.igraj(0, 0, 0, 0)
-treto.igraj(0, 0, 0, 0)
-treto.igraj(0, 4, 6, 1)
-treto.igraj(7, 7, 7, 1)
+    def igraj(self, id_igre, iz_i, iz_j, na_i, na_j):
+        nova_igra = self.igra(id_igre)
+        if nova_igra:
+            nova_igra.igraj(iz_i, iz_j, na_i, na_j)
+            self.igre[id_igre] = nova_igra
+            return nova_igra.stanje
+        else:
+            return 0

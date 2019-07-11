@@ -32,7 +32,7 @@
         %polje = "temno"
         %end
         %if (k, l) == (i, j):
-            <form action="/", method="get">
+            <form action="/igra/", method="get">
                 <td>
                     <button type="submit", class="figura_{{polje}}">
                     <p class="{{sah.barva_igra(k, l)}}">{{sah.figura_igra(k, l)}}</p>
@@ -40,7 +40,7 @@
                 </td>
             </form>
         %elif (k, l) in veljavni:
-            <form action="/premakni/", method="post">
+            <form action="/igra/premakni/", method="post">
             <input type="hidden", name="premiki", value="{{i}}{{j}}{{k}}{{l}}">
                 <td>
                     <button type="submit", class="polje_{{polje}}">
@@ -56,5 +56,4 @@
         %end
         </tr>
     %end
-    </table>
 </body>
