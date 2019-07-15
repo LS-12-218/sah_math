@@ -3,8 +3,13 @@
 </head>
 <body>
     <title>Šah Math</title>
-    <br><h1 class="text-primary", align="center">Šah</h1><br>
+    <br><h1 class="text-primary", align="center">Šah</h1><br><br>
     <form action="/igra/nova/", method="post", align="center">
-    <button class="btn btn-primary btn-lg", type="submit">Nova igra</button>
+        <input type="hidden", name="ai", value="1">
+        <button class="btn btn-primary btn-lg", type="submit">1 Igralec</button>
+    </form><br>
+    <form action="/igra/nova/", method="post", align="center">
+        <input type="hidden", name="ai", value="0">
+        <button class="btn btn-primary btn-lg", type="submit">2 Igralca</button>
     </form>
 </body>

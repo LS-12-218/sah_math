@@ -6,6 +6,7 @@
         p.brez {color: 000000;}
         p.beli {color: E0E0E0;}
         p.crni {color: 202020;}
+        p.zmaga {font-size: 5vmin; color: FFFFFF;}
         table {border-collapse: collapse; table-layout: fixed; position: relative; top: 6vmin;}
         table.zmaga {position: absolute; top: 30vmin;}
         th, td {height: 11vmin; width: 11vmin; text-align: center; padding: 0px;}
@@ -37,7 +38,7 @@
             <td class="zmaga">
                 Šah Mat<br>
                 <p><b>{{igralec}} je zmagal!</b></p><br>
-                <a href="/", type="button", class="btn btn-primary", type="submit">V redu</a>
+                <a href="/", type="button", class="btn btn-primary", type="submit"><p class="zmaga">V redu</p></a>
             </td>
         </tr>
     </table>

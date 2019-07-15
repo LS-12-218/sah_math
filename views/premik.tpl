@@ -9,7 +9,7 @@
         th, td {height: 11vmin; width: 11vmin; text-align: center; padding: 0px;}
         td.polje_svetlo {background-color: C09048;}
         td.polje_temno {background-color: 806030;}
-        button {height: 100%; width: 100%; text-align: center; border: none; padding: 0px;}
+        button {height: 100%; width: 100%; text-align: center; border: none; padding: 0px; margin: 0px;}
         button.polje_svetlo {background-color: 60C040;}
         button.polje_temno {background-color: 48A838;}
         button.polje_svetlo:hover {background-color: 40C030;}

@@ -15,8 +15,9 @@ def zacetek():
 
 @bottle.post("/igra/nova/")
 def nova():
+    ai = bool(int(bottle.request.forms["ai"]))
     bottle.response.set_cookie("sm_id_igre", str(sah.id_igre), secret = "nebosuganil", path = "/")
-    sah.dodaj_igro()
+    sah.dodaj_igro(ai)
     bottle.redirect("/igra/")
 
 @bottle.get("/igra/")
@@ -35,12 +36,21 @@ def premik():
 
 @bottle.post("/igra/premakni/")
 def premakni():
-    premiki = [int(mesto) for mesto in bottle.request.forms["premiki"]]
-    stanje = sah.igraj(id_igre(), *premiki)
-    if stanje == 3:
-        bottle.redirect("/igra/zmaga/")
-    elif stanje in (1, 2):
-        bottle.redirect("/igra/")
+    igra = sah.igra(id_igre())
+    if igra:
+        premiki = [int(mesto) for mesto in bottle.request.forms["premiki"]]
+        stanje = sah.igraj(id_igre(), *premiki)
+        if stanje == 3:
+            bottle.redirect("/igra/zmaga/")
+        elif stanje in (1, 2):
+            if not igra.ai:
+                bottle.redirect("/igra/")
+            else:
+                stanje = sah.igraj_ai(id_igre())
+                if stanje == 3:
+                    bottle.redirect("/igra/zmaga/")
+                elif stanje in (1, 2):
+                    bottle.redirect("/igra/")
 
 @bottle.get("/igra/zmaga/")
 def zmaga():
