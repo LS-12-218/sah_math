@@ -56,4 +56,5 @@
         %end
         </tr>
     %end
+    </table>
 </body>

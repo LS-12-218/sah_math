@@ -15,7 +15,7 @@ barve = {0: "brez", 1: "beli", 2: "crni"}
 
 vrednosti = {
     "": 0.0,
-    "kralj": 0.5,
+    "kralj": 2.0,
     "kraljica": 9.0,
     "trdnjava": 6.0,
     "lovec": 4.0,
@@ -25,6 +25,7 @@ vrednosti = {
 
 def zamenjaj(barva):
     return 1 + barva % 2
+
 
 class Igra:
 
@@ -39,6 +40,7 @@ class Igra:
         self.sah = []
         self.ne_premakni = {}
         self.stanje = 1
+        self.stanje_prej = 1
 
     def barva(self, i, j):
         return self.sahovnica[i][j][0]
@@ -58,8 +60,8 @@ class Igra:
         else:
             return False
 
-    def premakni(self, iz_i, iz_j, na_i, na_j):
-        if self.figura(iz_i, iz_j) == "kralj":
+    def premakni(self, iz_i, iz_j, na_i, na_j, ai = False):
+        if self.figura(iz_i, iz_j) == "kralj" and not ai:
             if self.barva(iz_i, iz_j) == 1:
                 self.kralj_1 = (na_i, na_j)
             elif self.barva(iz_i, iz_j) == 2:
@@ -157,8 +159,7 @@ class Igra:
             else:
                 premiki = [premik for premik in premiki if self.dovoljen_premik(i, j, *premik, *self.ne_premakni[(i, j)])]
         if self.stanje == 2 and figura != "kralj":
-            if premiki:
-                return [premik for premik in premiki if premik in self.sah]
+            return list(set(premiki) & set(self.sah))
         else:
             return premiki
 
@@ -224,20 +225,23 @@ class Igra:
         elif self.igralec == 2:
             return self.kralj_1
 
-    def je_sah(self, i, j):
-        self.stanje = 2
+    def je_sah(self, i, j, preveri_ai = False):
         kralj = self.kralj_nasprotni()
         if self.figura(i, j) in ("lovec", "trdnjava", "kraljica"):
             sah = self.sah_polja(i, j, *kralj)
         else:
             sah = [(i, j)]
-        if not any([self.preveri_sah(self.igralec, *polje, False) for polje in sah]) and self.mozni_premiki(*kralj) == []:
+        mat = not any([self.preveri_sah(self.igralec, *polje, False) for polje in sah]) and self.mozni_premiki(*kralj) == []
+        if preveri_ai:
+            return mat
+        elif mat:
             self.konec_igre()
         else:
             self.stanje = 2
             self.sah = sah
 
     def igraj(self, iz_i, iz_j, na_i, na_j):
+        self.stanje_prej = int(self.stanje)
         kralj = self.kralj_nasprotni()
         igralec = self.igralec
         self.premakni(iz_i, iz_j, na_i, na_j)
@@ -261,26 +265,24 @@ class Igra:
             if naslednji:
                 vrnjena_vrednost += max([vrednosti[self.figura(*premik)] for premik in naslednji]) * 0.8
             if barva == 1:
-                kralj = self.kralj_2
+                i, j = self.kralj_2
             elif barva == 2:
-                kralj = self.kralj_1
-            kralj_polja = self.mozni_premiki(*kralj)
+                i, j = self.kralj_1
+            kralj_polja = [(k, l) for k in range(i - 1, i + 2) for l in range(j - 1, j + 2) if self.veljaven_premik(-1, k, l) and (k, l) != (i, j)]
             if kralj_polja:
-                kralj_polja = [premik for premik in self.mozni_premiki(*kralj) if premik in mozni]
+                kralj_polja = [premik for premik in kralj_polja if premik in mozni]
                 vrnjena_vrednost = max(vrnjena_vrednost, 2.0 * len(kralj_polja))
         return vrnjena_vrednost
 
     def ai_vrednost(self, i, j):
         vrnjena_vrednost = self.ai_zacetna(2, i, j)
         mozni = self.mozni_premiki(i, j)
-        if mozni:
-            if self.kralj_1 in mozni:
-                self.je_sah(i, j)
-                if self.stanje == 3:
-                    return 1000.0
-        drugi = self.vrni_sah(2, i, j, False)
+        if self.kralj_1 in mozni:
+            if self.je_sah(i, j, True):
+                return 1000.0
+        drugi = self.vrni_sah(2, i, j)
         if drugi:
-            svoji = self.vrni_sah(1, i, j, False)
+            svoji = self.vrni_sah(1, i, j)
             vrednost_figura = vrednosti[self.figura(i, j)]
             if not svoji:
                 vrnjena_vrednost = - vrednost_figura
@@ -294,22 +296,22 @@ class Igra:
         figure_polja = self.vse_figure()
         premiki_mozno = []
         sahovnica = [list(vrsta) for vrsta in self.sahovnica]
-        if not figure_polja:
-            assert False
         for figura in figure_polja:
             vrednost = self.ai_vrednost(*figura)
             premiki = self.mozni_premiki(*figura)
-            if premiki:
-                for premik in premiki:
-                    nova_vrednost = - vrednost
-                    if self.barva(*premik) == 1:
-                        nova_vrednost += (1.8 * vrednosti[self.figura(*premik)] + self.ai_zacetna(1, *premik))
-                    self.premakni(*figura, *premik)
-                    nova_vrednost += self.ai_vrednost(*premik)
-                    premiki_mozno.append((nova_vrednost, figura + premik))
-                    self.sahovnica = [list(vrsta) for vrsta in sahovnica]
-        koncna = max([vr[0] for vr in premiki_mozno])
-        self.igraj(*choice([vr[1] for vr in premiki_mozno if vr[0] == koncna]))
+            for premik in premiki:
+                nova_vrednost = - vrednost
+                if self.barva(*premik) == 1:
+                    nova_vrednost += (1.8 * vrednosti[self.figura(*premik)] + self.ai_zacetna(1, *premik))
+                self.premakni(*figura, *premik, True)
+                nova_vrednost += self.ai_vrednost(*premik)
+                premiki_mozno.append((nova_vrednost, figura + premik))
+                self.sahovnica = [list(vrsta) for vrsta in sahovnica]
+        if premiki_mozno:
+            koncna = max([vr[0] for vr in premiki_mozno])
+            self.igraj(*choice([vr[1] for vr in premiki_mozno if vr[0] == koncna]))
+        else:
+            self.stanje = 3
                 
 
 class Sah:
