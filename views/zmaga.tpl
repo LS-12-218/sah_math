@@ -13,11 +13,12 @@
         td.polje_svetlo {background-color: C09048;}
         td.polje_temno {background-color: 806030;}
         td.zmaga {background-color: A0A0F0; opacity: 0.66; height: 40vmin; width: 100vw; font-size: 6vmin;}
+        a.btn.btn-primary.nazaj {font-size: 4vmin; align-self: center; padding: 1vmin;}
     </style>
 </head>
 <body>
     <title>Šah Math</title>
-    <table align="center">
+    <table align = "center">
     %for k in range(8):
         <tr>
         %for l in range(8):
@@ -38,7 +39,7 @@
             <td class="zmaga">
                 Šah Mat<br>
                 <p><b>{{igralec}} je zmagal!</b></p><br>
-                <a href="/", type="button", class="btn btn-primary", type="submit"><p class="zmaga">V redu</p></a>
+                <a href="/", type="button", class="btn btn-primary nazaj", type="submit">V redu</a>
             </td>
         </tr>
     </table>
