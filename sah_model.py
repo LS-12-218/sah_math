@@ -30,7 +30,14 @@ def zamenjaj(barva):
 class Igra:
 
     def __init__(self, ai):
-        sahovnica = [[(2, "trdnjava"), (2, "konj"), (2, "lovec"), (2, "kraljica"), (2, "kralj"), (2, "lovec"), (2, "konj"), (2, "trdnjava")]] + [8 * [(2, "kmet")]] + 4 * [8 * [(0, "")]] + [8 * [(1, "kmet")]] + [[(1, "trdnjava"), (1, "konj"), (1, "lovec"), (1, "kraljica"), (1, "kralj"), (1, "lovec"), (1, "konj"), (1, "trdnjava")]]
+        sahovnica = [[(2, "trdnjava"), (2, "konj"), (2, "lovec"), (2, "kraljica"), (2, "kralj"), (2, "lovec"), (2, "konj"), (2, "trdnjava")],
+        8 * [(2, "kmet")],
+        8 * [(0, "")],
+        8 * [(0, "")],
+        8 * [(0, "")],
+        8 * [(0, "")],
+        8 * [(1, "kmet")],
+        [(1, "trdnjava"), (1, "konj"), (1, "lovec"), (1, "kraljica"), (1, "kralj"), (1, "lovec"), (1, "konj"), (1, "trdnjava")]]
         sahovnica = [list(vrsta) for vrsta in sahovnica]
         self.ai = ai
         self.sahovnica = sahovnica
@@ -40,7 +47,6 @@ class Igra:
         self.sah = []
         self.ne_premakni = {}
         self.stanje = 1
-        self.stanje_prej = 1
 
     def barva(self, i, j):
         return self.sahovnica[i][j][0]
@@ -146,9 +152,11 @@ class Igra:
         elif figura == "trdnjava":
             return self.premiki_trdnjava(barva, i, j)
         elif figura == "kraljica":
-            return (self.premiki_lovec(barva, i, j) + self.premiki_trdnjava(barva, i, j))
+            return self.premiki_lovec(barva, i, j) + self.premiki_trdnjava(barva, i, j)
         elif figura == "kralj":
             return self.premiki_kralj(barva, i, j)
+        else:
+            return []
 
     def mozni_premiki(self, i, j):
         figura = self.figura(i, j)
@@ -159,7 +167,7 @@ class Igra:
             else:
                 premiki = [premik for premik in premiki if self.dovoljen_premik(i, j, *premik, *self.ne_premakni[(i, j)])]
         if self.stanje == 2 and figura != "kralj":
-            return list(set(premiki) & set(self.sah))
+            return [premik for premik in premiki if premik in self.sah]
         else:
             return premiki
 
@@ -206,7 +214,10 @@ class Igra:
             kmet = [(i - 1, k) for k in (j - 1, j + 1) if self.veljaven_premik(barva, i - 1, k)]
         elif barva == 2:
             kmet = [(i + 1, k) for k in (j - 1, j + 1) if self.veljaven_premik(barva, i + 1, k)]
-        sah = self.je_figura(["kmet"], kmet) + self.je_figura(["konj"], self.premiki_konj(barva, i, j)) + self.je_figura(["lovec", "kraljica"], self.premiki_lovec(barva, i, j)) + self.je_figura(["trdnjava", "kraljica"], self.premiki_trdnjava(barva, i, j))
+        sah = self.je_figura(["kmet"], kmet)
+        sah += self.je_figura(["konj"], self.premiki_konj(barva, i, j))
+        sah += self.je_figura(["lovec", "kraljica"], self.premiki_lovec(barva, i, j))
+        sah += self.je_figura(["trdnjava", "kraljica"], self.premiki_trdnjava(barva, i, j))
         if kralj:
             kralj = [(k, l) for k in range(i - 1, i + 2) for l in range(j - 1, j + 2) if self.veljaven_premik(barva, k, l)]
             sah += self.je_figura(["kralj"], kralj)
@@ -231,7 +242,8 @@ class Igra:
             sah = self.sah_polja(i, j, *kralj)
         else:
             sah = [(i, j)]
-        mat = not any([self.preveri_sah(self.igralec, *polje, False) for polje in sah]) and self.mozni_premiki(*kralj) == []
+        mat = not any([self.preveri_sah(self.igralec, *polje, kralj = False) for polje in sah])\
+        and self.mozni_premiki(*kralj) == []
         if preveri_ai:
             return mat
         elif mat:
@@ -241,7 +253,6 @@ class Igra:
             self.sah = sah
 
     def igraj(self, iz_i, iz_j, na_i, na_j):
-        self.stanje_prej = int(self.stanje)
         kralj = self.kralj_nasprotni()
         igralec = self.igralec
         self.premakni(iz_i, iz_j, na_i, na_j)
@@ -268,7 +279,8 @@ class Igra:
                 i, j = self.kralj_2
             elif barva == 2:
                 i, j = self.kralj_1
-            kralj_polja = [(k, l) for k in range(i - 1, i + 2) for l in range(j - 1, j + 2) if self.veljaven_premik(-1, k, l) and (k, l) != (i, j)]
+            kralj_polja = [(k, l) for k in range(i - 1, i + 2) for l in range(j - 1, j + 2)\
+            if self.veljaven_premik(0, k, l, upostevaj_vse = True) and (k, l) != (i, j)]
             if kralj_polja:
                 kralj_polja = [premik for premik in kralj_polja if premik in mozni]
                 vrnjena_vrednost = max(vrnjena_vrednost, 2.0 * len(kralj_polja))
@@ -278,7 +290,7 @@ class Igra:
         vrnjena_vrednost = self.ai_zacetna(2, i, j)
         mozni = self.mozni_premiki(i, j)
         if self.kralj_1 in mozni:
-            if self.je_sah(i, j, True):
+            if self.je_sah(i, j, preveri_ai = True):
                 return 1000.0
         drugi = self.vrni_sah(2, i, j)
         if drugi:
@@ -303,7 +315,7 @@ class Igra:
                 nova_vrednost = - vrednost
                 if self.barva(*premik) == 1:
                     nova_vrednost += (1.8 * vrednosti[self.figura(*premik)] + self.ai_zacetna(1, *premik))
-                self.premakni(*figura, *premik, True)
+                self.premakni(*figura, *premik, ai = True)
                 nova_vrednost += self.ai_vrednost(*premik)
                 premiki_mozno.append((nova_vrednost, figura + premik))
                 self.sahovnica = [list(vrsta) for vrsta in sahovnica]
@@ -351,3 +363,9 @@ class Sah:
             return nova_igra.stanje
         else:
             return 0
+
+def veljavno_polje_niz(i, j):
+    if i.isdigit() and j.isdigit():
+        return 0 <= int(i) <= 7 and 0 <= int(j) <= 7
+    else:
+        return False

@@ -1,6 +1,5 @@
 import bottle
 import sah_model
-import os
 
 sah = sah_model.Sah()
 
@@ -29,10 +28,10 @@ def igranje():
 @bottle.get("/igra/premik/")
 def premik():
     igra = sah.igra(id_igre())
-    i = int(bottle.request.query["i"])
-    j = int(bottle.request.query["j"])
-    if igra:
-        return bottle.template("premik.tpl", sah = igra, veljavni = igra.mozni_premiki(i, j), i = i, j = j)
+    i = bottle.request.query["i"]
+    j = bottle.request.query["j"]
+    if igra and sah_model.veljavno_polje_niz(i, j):
+        return bottle.template("premik.tpl", sah = igra, veljavni = igra.mozni_premiki(int(i), int(j)), i = int(i), j = int(j))
 
 @bottle.post("/igra/premakni/")
 def premakni():
@@ -62,7 +61,6 @@ def zmaga():
             igralec = "Beli"
         sah.odstrani_igro(id_igre())
         return bottle.template("zmaga", sah = igra, igralec = igralec)
-    
 
 
 bottle.run(debug= True, reloader= True)
